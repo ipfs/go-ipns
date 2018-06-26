@@ -38,9 +38,9 @@
     },
     {
       "author": "whyrusleeping",
-      "hash": "QmeXmxAE5URbpqgAMAwQiR3zEbd2wvSPUXbdytvFdGNELF",
+      "hash": "QmZR2XWVVBCtbgBWnQhWk2xcQfaR3W8faQPriAiaaj7rsr",
       "name": "go-libp2p-peerstore",
-      "version": "1.4.21"
+      "version": "1.4.22"
     },
     {
       "hash": "QmVsp2KdPYE6M8ryzCk5KHLo3zprcY5hBDaYx6uPCFUdxA",
@@ -53,6 +53,6 @@
   "license": "MIT",
   "name": "go-ipns",
   "releaseCmd": "git commit -a -m \"gx publish $VERSION\"",
-  "version": "0.1.3"
+  "version": "0.1.4"
 }
 
