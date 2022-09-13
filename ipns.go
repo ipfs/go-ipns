@@ -144,11 +144,12 @@ func Validate(pk ic.PubKey, entry *pb.IpnsEntry) error {
 			return ErrSignature
 		}
 
-		// TODO: If we switch from pb.IpnsEntry to a more generic IpnsRecord type then perhaps we should only check
-		// this if there is no v1 signature. In the meanwhile this helps avoid some potential rough edges around people
-		// checking the entry fields instead of doing CBOR decoding everywhere.
-		if err := validateCborDataMatchesPbData(entry); err != nil {
-			return err
+		// When V1 signature is present, we want to ensure V1 and V2 fields are in sync
+		// (if signatureV1 is missing, we only care about 'IpnsEntry.data' and 'signatureV2')
+		if entry.GetSignatureV1() != nil {
+			if err := validateCborDataMatchesPbData(entry); err != nil {
+				return err
+			}
 		}
 	} else {
 		// always error if no valid signature could be found
@@ -165,7 +166,8 @@ func Validate(pk ic.PubKey, entry *pb.IpnsEntry) error {
 	return nil
 }
 
-// TODO: Most of this function could probably be replaced with codegen
+// This code is only used for backward-compatibility when IPNS record includes
+// both V1 and V2 signatures
 func validateCborDataMatchesPbData(entry *pb.IpnsEntry) error {
 	if len(entry.GetData()) == 0 {
 		return fmt.Errorf("record data is missing")
@@ -231,7 +233,7 @@ func validateCborDataMatchesPbData(entry *pb.IpnsEntry) error {
 		return fmt.Errorf("field \"%v\" did not match between protobuf and CBOR", sequence)
 	}
 
-	nd, err = fullNd.LookupByString("TTL")
+	nd, err = fullNd.LookupByString(ttl)
 	if err != nil {
 		return err
 	}
@@ -251,10 +253,50 @@ func validateCborDataMatchesPbData(entry *pb.IpnsEntry) error {
 // This function returns ErrUnrecognizedValidity if the validity type of the
 // record isn't EOL. Otherwise, it returns an error if it can't parse the EOL.
 func GetEOL(entry *pb.IpnsEntry) (time.Time, error) {
-	if entry.GetValidityType() != pb.IpnsEntry_EOL {
+	var (
+		validityTypeValue pb.IpnsEntry_ValidityType
+		validityValue     []byte
+	)
+
+	// Use signed (SignatureV2) values from IpnsEntry.data (DAG-CBOR)
+
+	// Parse IpnsEntry.data as DAG-CBOR
+	dec, err := ipldcodec.LookupDecoder(uint64(multicodec.DagCbor))
+	if err != nil {
 		return time.Time{}, ErrUnrecognizedValidity
 	}
-	return u.ParseRFC3339(string(entry.GetValidity()))
+
+	ndbuilder := basicnode.Prototype__Map{}.NewBuilder()
+	if err := dec(ndbuilder, bytes.NewReader(entry.GetData())); err != nil {
+		return time.Time{}, ErrUnrecognizedValidity
+	}
+	fullNd := ndbuilder.Build()
+
+	// Read IpnsEntry.data[validityType]
+	nd, err := fullNd.LookupByString(validityType)
+	if err != nil {
+		return time.Time{}, ErrUnrecognizedValidity
+	}
+	ndInt, err := nd.AsInt()
+	if err != nil {
+		return time.Time{}, ErrUnrecognizedValidity
+	}
+	validityTypeValue = pb.IpnsEntry_ValidityType(ndInt)
+
+	// Read IpnsEntry.data[validity]
+	nd, err = fullNd.LookupByString(validity)
+	if err != nil {
+		return time.Time{}, ErrUnrecognizedValidity
+	}
+	validityValue, err = nd.AsBytes()
+	if err != nil {
+		return time.Time{}, ErrUnrecognizedValidity
+	}
+
+	if validityTypeValue != pb.IpnsEntry_EOL {
+		return time.Time{}, ErrUnrecognizedValidity
+	}
+	return u.ParseRFC3339(string(validityValue))
 }
 
 // EmbedPublicKey embeds the given public key in the given ipns entry. While not

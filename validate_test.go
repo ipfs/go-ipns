@@ -272,6 +272,18 @@ func TestSignatureV1Ignored(t *testing.T) {
 	if err := Validate(pk, entry1); err != nil {
 		t.Fatal(err)
 	}
+
+	// Having no V1 fields is acceptable as long as V2 ('data' and 'signatureV2') are ok
+	entry1.Value = nil
+	entry1.SignatureV1 = nil
+	entry1.ValidityType = nil
+	entry1.Validity = nil
+	entry1.Sequence = nil
+	entry1.Ttl = nil
+	entry1.PubKey = nil
+	if err := Validate(pk, entry1); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestCborDataCanonicalization(t *testing.T) {
