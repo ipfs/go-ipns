@@ -133,27 +133,25 @@ func createCborDataForIpnsEntry(e *pb.IpnsEntry) ([]byte, error) {
 // Validates validates the given IPNS entry against the given public key.
 func Validate(pk ic.PubKey, entry *pb.IpnsEntry) error {
 	// Check the ipns record signature with the public key
-
-	// Check v2 signature if it's available
-	if entry.GetSignatureV2() != nil {
-		sig2Data, err := ipnsEntryDataForSigV2(entry)
-		if err != nil {
-			return fmt.Errorf("could not compute signature data: %w", err)
-		}
-		if ok, err := pk.Verify(sig2Data, entry.GetSignatureV2()); err != nil || !ok {
-			return ErrSignature
-		}
-
-		// When V1 signature is present, we want to ensure V1 and V2 fields are in sync
-		// (if signatureV1 is missing, we only care about 'IpnsEntry.data' and 'signatureV2')
-		if entry.GetSignatureV1() != nil {
-			if err := validateCborDataMatchesPbData(entry); err != nil {
-				return err
-			}
-		}
-	} else {
-		// always error if no valid signature could be found
+	if entry.GetSignatureV2() == nil {
+		// always error if no valid signatureV2 could be found
 		return ErrSignature
+	}
+	sig2Data, err := ipnsEntryDataForSigV2(entry)
+	if err != nil {
+		return fmt.Errorf("could not compute signature data: %w", err)
+	}
+	if ok, err := pk.Verify(sig2Data, entry.GetSignatureV2()); err != nil || !ok {
+		return ErrSignature
+	}
+
+	// Ensure protobuf and CBOR fields are in sync in V1+V2 records
+	// See 'Record Verification' in https://github.com/ipfs/specs/pull/319
+	// (if V1 fields are missing, we only care about 'IpnsEntry.data' and 'signatureV2')
+	if hasV1Fields(entry) {
+		if err := validateCborDataMatchesPbData(entry); err != nil {
+			return err
+		}
 	}
 
 	eol, err := GetEOL(entry)
@@ -164,6 +162,17 @@ func Validate(pk ic.PubKey, entry *pb.IpnsEntry) error {
 		return ErrExpiredRecord
 	}
 	return nil
+}
+
+// Returns true if IpnsEntry protobuf includes any of the V1 fields that have
+// signed values inside of IpnsEntry.data CBOR
+func hasV1Fields(entry *pb.IpnsEntry) bool {
+	return entry.GetSignatureV1() != nil ||
+		entry.GetValue() != nil ||
+		entry.GetValidity() != nil ||
+		entry.GetValidityType() != pb.IpnsEntry_EOL ||
+		entry.GetSequence() != 0 ||
+		entry.GetTtl() != 0
 }
 
 // This code is only used for backward-compatibility when IPNS record includes

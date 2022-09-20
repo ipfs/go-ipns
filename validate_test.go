@@ -284,6 +284,12 @@ func TestSignatureV1Ignored(t *testing.T) {
 	if err := Validate(pk, entry1); err != nil {
 		t.Fatal(err)
 	}
+
+	// Having any of V1 fields requires ALL V1 protobuf values to match V2 CBOR in 'data'
+	entry1.Validity = []byte("something")
+	if err := Validate(pk, entry1); !strings.Contains(err.Error(), "did not match between protobuf and CBOR") {
+		t.Fatal(err)
+	}
 }
 
 func TestCborDataCanonicalization(t *testing.T) {
