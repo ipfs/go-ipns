@@ -81,6 +81,11 @@ func TestEthRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	err = Validate(pub, entry)
+	if err == nil {
+		t.Fatal("Expect to fail normal validation")
+	}
 }
 
 func TestValidator(t *testing.T) {
