@@ -62,6 +62,27 @@ func testValidatorCaseMatchFunc(t *testing.T, priv crypto.PrivKey, kbook pstore.
 	matchf(t, validator.Validate(key, data))
 }
 
+func TestEthRoundTrip(t *testing.T) {
+	ts := time.Now()
+
+	sr := u.NewTimeSeededRand()
+	priv, pub, err := crypto.GenerateKeyPairWithReader(crypto.Ed25519, 2048, sr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	p := []byte("/ipfs/QmfM2r8seH2GiRaC4esTjeraXEachRt8ZsSeGaWTPLyMoG")
+	entry, err := createWithEth(priv, p, 1, ts.Add(time.Hour), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = ValidateEth(pub, entry)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestValidator(t *testing.T) {
 	ts := time.Now()
 

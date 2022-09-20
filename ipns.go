@@ -33,11 +33,41 @@ const (
 	ttl          = "TTL"
 )
 
+type Signer interface {
+	// Cryptographically sign the given bytes
+	Sign([]byte) ([]byte, error)
+}
+
 // Create creates a new IPNS entry and signs it with the given private key.
 //
 // This function does not embed the public key. If you want to do that, use
 // `EmbedPublicKey`.
-func Create(sk ic.PrivKey, val []byte, seq uint64, eol time.Time, ttl time.Duration) (*pb.IpnsEntry, error) {
+func Create(signer Signer, val []byte, seq uint64, eol time.Time, ttl time.Duration) (*pb.IpnsEntry, error) {
+	entry, err := create(val, seq, eol, ttl)
+	if err != nil {
+		return nil, err
+	}
+
+	sig1, err := signer.Sign(ipnsEntryDataForSigV1(entry))
+	if err != nil {
+		return nil, errors.Wrap(err, "could not compute signature data")
+	}
+	entry.SignatureV1 = sig1
+
+	sig2Data, err := ipnsEntryDataForSigV2(entry)
+	if err != nil {
+		return nil, err
+	}
+	sig2, err := signer.Sign(sig2Data)
+	if err != nil {
+		return nil, err
+	}
+	entry.SignatureV2 = sig2
+
+	return entry, nil
+}
+
+func create(val []byte, seq uint64, eol time.Time, ttl time.Duration) (*pb.IpnsEntry, error) {
 	entry := new(pb.IpnsEntry)
 
 	entry.Value = val
@@ -54,18 +84,21 @@ func Create(sk ic.PrivKey, val []byte, seq uint64, eol time.Time, ttl time.Durat
 		return nil, err
 	}
 	entry.Data = cborData
+	return entry, nil
+}
 
-	sig1, err := sk.Sign(ipnsEntryDataForSigV1(entry))
-	if err != nil {
-		return nil, errors.Wrap(err, "could not compute signature data")
-	}
-	entry.SignatureV1 = sig1
-
-	sig2Data, err := ipnsEntryDataForSigV2(entry)
+//just used for testing for now.
+func createWithEth(signer Signer, val []byte, seq uint64, eol time.Time, ttl time.Duration) (*pb.IpnsEntry, error) {
+	entry, err := create(val, seq, eol, ttl)
 	if err != nil {
 		return nil, err
 	}
-	sig2, err := sk.Sign(sig2Data)
+
+	sig2Data, err := ipnsEntryDataForEth(entry) //only diferent line.
+	if err != nil {
+		return nil, err
+	}
+	sig2, err := signer.Sign(sig2Data)
 	if err != nil {
 		return nil, err
 	}
@@ -153,6 +186,46 @@ func Validate(pk ic.PubKey, entry *pb.IpnsEntry) error {
 		if ok, err := pk.Verify(ipnsEntryDataForSigV1(entry), entry.GetSignatureV1()); err != nil || !ok {
 			return ErrSignature
 		}
+	}
+
+	eol, err := GetEOL(entry)
+	if err != nil {
+		return err
+	}
+	if time.Now().After(eol) {
+		return ErrExpiredRecord
+	}
+	return nil
+}
+
+// A subset of PubKey inteface
+type Verifier interface {
+	// Verify that 'sig' is the signed hash of 'data'
+	Verify(data []byte, sig []byte) (bool, error)
+}
+
+// Validates validates the given IPNS entry against the given public key.
+func ValidateEth(v Verifier, entry *pb.IpnsEntry) error {
+	// Check the ipns record signature with the public key
+
+	// Check v2 signature if it's available, otherwise use the v1 signature
+	if entry.GetSignatureV2() == nil {
+		return ErrSignature
+	}
+	sig2Data, err := ipnsEntryDataForEth(entry)
+	if err != nil {
+		return fmt.Errorf("could not compute signature data: %w", err)
+	}
+
+	if ok, err := v.Verify(sig2Data, entry.GetSignatureV2()); err != nil || !ok {
+		return ErrSignature
+	}
+
+	// TODO: If we switch from pb.IpnsEntry to a more generic IpnsRecord type then perhaps we should only check
+	// this if there is no v1 signature. In the meanwhile this helps avoid some potential rough edges around people
+	// checking the entry fields instead of doing CBOR decoding everywhere.
+	if err := validateCborDataMatchesPbData(entry); err != nil {
+		return err
 	}
 
 	eol, err := GetEOL(entry)
