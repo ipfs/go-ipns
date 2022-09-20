@@ -21,6 +21,8 @@ import (
 	u "github.com/ipfs/go-ipfs-util"
 	ic "github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/peer"
+
+	"golang.org/x/crypto/sha3"
 )
 
 const (
@@ -136,6 +138,7 @@ func Validate(pk ic.PubKey, entry *pb.IpnsEntry) error {
 		if err != nil {
 			return fmt.Errorf("could not compute signature data: %w", err)
 		}
+
 		if ok, err := pk.Verify(sig2Data, entry.GetSignatureV2()); err != nil || !ok {
 			return ErrSignature
 		}
@@ -369,10 +372,19 @@ func ipnsEntryDataForSigV1(e *pb.IpnsEntry) []byte {
 		[]byte{})
 }
 
+func ipnsEntryDataForEth(e *pb.IpnsEntry) ([]byte, error) {
+	//https://github.com/ethereum/go-ethereum/blob/b628d7276624c2d8ea7dd97d2259a2c2fce7d3cc/accounts/accounts.go#L197
+	msg := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(e.Data), string(e.Data))
+	keccak256 := sha3.NewLegacyKeccak256()
+	if _, err := keccak256.Write([]byte(msg)); err != nil {
+		return nil, err
+	}
+	return keccak256.Sum(nil), nil
+}
+
 func ipnsEntryDataForSigV2(e *pb.IpnsEntry) ([]byte, error) {
 	dataForSig := []byte("ipns-signature:")
 	dataForSig = append(dataForSig, e.Data...)
-
 	return dataForSig, nil
 }
 
