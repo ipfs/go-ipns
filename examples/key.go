@@ -5,6 +5,8 @@ import (
 )
 
 // GenerateRSAKeyPair is used to generate an RSA key pair
+//
+// Deprecated: use github.com/ipfs/boxo/ipns/examples.GenerateRSAKeyPair
 func GenerateRSAKeyPair(bits int) (crypto.PrivKey, error) {
 	priv, _, err := crypto.GenerateKeyPair(crypto.RSA, bits)
 	if err != nil {
@@ -14,6 +16,8 @@ func GenerateRSAKeyPair(bits int) (crypto.PrivKey, error) {
 }
 
 // GenerateEDKeyPair is used to generate an ED25519 keypair
+//
+// Deprecated: use github.com/ipfs/boxo/ipns/examples.GenerateEDKeyPair
 func GenerateEDKeyPair() (crypto.PrivKey, error) {
 	// ED25519 ignores the bit param and uses 256bit keys
 	priv, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 256)

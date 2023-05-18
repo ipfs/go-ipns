@@ -35,6 +35,8 @@ const (
 //
 // This function does not embed the public key. If you want to do that, use
 // `EmbedPublicKey`.
+//
+// Deprecated: use github.com/ipfs/boxo/ipns.Create
 func Create(sk ic.PrivKey, val []byte, seq uint64, eol time.Time, ttl time.Duration) (*pb.IpnsEntry, error) {
 	entry := new(pb.IpnsEntry)
 
@@ -131,6 +133,8 @@ func createCborDataForIpnsEntry(e *pb.IpnsEntry) ([]byte, error) {
 }
 
 // Validates validates the given IPNS entry against the given public key.
+//
+// Deprecated: use github.com/ipfs/boxo/ipns.Validate
 func Validate(pk ic.PubKey, entry *pb.IpnsEntry) error {
 	// Make sure max size is respected
 	if entry.Size() > MaxRecordSize {
@@ -254,6 +258,8 @@ func validateCborDataMatchesPbData(entry *pb.IpnsEntry) error {
 //
 // This function returns ErrUnrecognizedValidity if the validity type of the
 // record isn't EOL. Otherwise, it returns an error if it can't parse the EOL.
+//
+// Deprecated: use github.com/ipfs/boxo/ipns.GetEOL
 func GetEOL(entry *pb.IpnsEntry) (time.Time, error) {
 	if entry.GetValidityType() != pb.IpnsEntry_EOL {
 		return time.Time{}, ErrUnrecognizedValidity
@@ -265,6 +271,8 @@ func GetEOL(entry *pb.IpnsEntry) (time.Time, error) {
 // strictly required, some nodes (e.g., DHT servers) may reject IPNS entries
 // that don't embed their public keys as they may not be able to validate them
 // efficiently.
+//
+// Deprecated: use github.com/ipfs/boxo/ipns.EmbedPublicKey
 func EmbedPublicKey(pk ic.PubKey, entry *pb.IpnsEntry) error {
 	// Try extracting the public key from the ID. If we can, *don't* embed
 	// it.
@@ -292,6 +300,8 @@ func EmbedPublicKey(pk ic.PubKey, entry *pb.IpnsEntry) error {
 //
 // This function returns (nil, nil) when no public key can be extracted and
 // nothing is malformed.
+//
+// Deprecated: use github.com/ipfs/boxo/ipns.ExtractPublicKey
 func ExtractPublicKey(pid peer.ID, entry *pb.IpnsEntry) (ic.PubKey, error) {
 	if entry.PubKey != nil {
 		pk, err := ic.UnmarshalPublicKey(entry.PubKey)
@@ -328,6 +338,8 @@ func ExtractPublicKey(pid peer.ID, entry *pb.IpnsEntry) (ic.PubKey, error) {
 // order by comparing their serialized byte representations (using
 // `bytes.Compare`). You must do this if you are implementing a libp2p record
 // validator (or you can just use the one provided for you by this package).
+//
+// Deprecated: use github.com/ipfs/boxo/ipns.Compare
 func Compare(a, b *pb.IpnsEntry) (int, error) {
 	aHasV2Sig := a.GetSignatureV2() != nil
 	bHasV2Sig := b.GetSignatureV2() != nil

@@ -12,6 +12,8 @@ import (
 // CreateEntryWithEmbed shows how you can create an IPNS entry
 // and embed it with a public key. For ed25519 keys this is not needed
 // so attempting to embed with an ed25519 key, will not actually embed the key
+//
+// Deprecated: use github.com/ipfs/boxo/ipns/examples.CreateEntryWithEmbed
 func CreateEntryWithEmbed(ipfsPath string, publicKey crypto.PubKey, privateKey crypto.PrivKey) (*pb.IpnsEntry, error) {
 	ipfsPathByte := []byte(ipfsPath)
 	eol := time.Now().Add(time.Hour * 48)
