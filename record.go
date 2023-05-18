@@ -19,12 +19,16 @@ var log = logging.Logger("ipns")
 var _ record.Validator = Validator{}
 
 // RecordKey returns the libp2p record key for a given peer ID.
+//
+// Deprecated: use github.com/ipfs/boxo/ipns.RecordKey
 func RecordKey(pid peer.ID) string {
 	return "/ipns/" + string(pid)
 }
 
 // Validator is an IPNS record validator that satisfies the libp2p record
 // validator interface.
+//
+// Deprecated: use github.com/ipfs/boxo/ipns.Validator
 type Validator struct {
 	// KeyBook, if non-nil, will be used to lookup keys for validating IPNS
 	// records.

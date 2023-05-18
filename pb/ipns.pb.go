@@ -23,17 +23,22 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// Deprecated: use github.com/ipfs/boxo/ipns/pb.IpnsEntry_ValidityType
 type IpnsEntry_ValidityType int32
 
 const (
 	// setting an EOL says "this record is valid until..."
+	//
+	// Deprecated: use github.com/ipfs/boxo/ipns/pb.IpnsEntry_EOL
 	IpnsEntry_EOL IpnsEntry_ValidityType = 0
 )
 
+// Deprecated: use github.com/ipfs/boxo/ipns/pb.IpnsEntry_ValidityType_name
 var IpnsEntry_ValidityType_name = map[int32]string{
 	0: "EOL",
 }
 
+// Deprecated: use github.com/ipfs/boxo/ipns/pb.IpnsEntry_ValidityType_value
 var IpnsEntry_ValidityType_value = map[string]int32{
 	"EOL": 0,
 }
@@ -61,6 +66,7 @@ func (IpnsEntry_ValidityType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_4d5b16fb32bfe8ea, []int{0, 0}
 }
 
+// Deprecated: use github.com/ipfs/boxo/ipns/pb.IpnsEntry
 type IpnsEntry struct {
 	Value        []byte                  `protobuf:"bytes,1,opt,name=value" json:"value,omitempty"`
 	SignatureV1  []byte                  `protobuf:"bytes,2,opt,name=signatureV1" json:"signatureV1,omitempty"`
@@ -176,6 +182,7 @@ func (m *IpnsEntry) GetData() []byte {
 	return nil
 }
 
+// Deprecated: use github.com/ipfs/boxo/ipns/pb.IpnsSignatureV2Checker
 type IpnsSignatureV2Checker struct {
 	PubKey               []byte   `protobuf:"bytes,7,opt,name=pubKey" json:"pubKey,omitempty"`
 	SignatureV2          []byte   `protobuf:"bytes,8,opt,name=signatureV2" json:"signatureV2,omitempty"`
@@ -981,7 +988,10 @@ func skipIpns(dAtA []byte) (n int, err error) {
 }
 
 var (
-	ErrInvalidLengthIpns        = fmt.Errorf("proto: negative length found during unmarshaling")
-	ErrIntOverflowIpns          = fmt.Errorf("proto: integer overflow")
+	// Deprecated: use github.com/ipfs/boxo/ipns/pb.ErrInvalidLengthIpns
+	ErrInvalidLengthIpns = fmt.Errorf("proto: negative length found during unmarshaling")
+	// Deprecated: use github.com/ipfs/boxo/ipns/pb.ErrIntOverflowIpns
+	ErrIntOverflowIpns = fmt.Errorf("proto: integer overflow")
+	// Deprecated: use github.com/ipfs/boxo/ipns/pb.ErrUnexpectedEndOfGroupIpns
 	ErrUnexpectedEndOfGroupIpns = fmt.Errorf("proto: unexpected end of group")
 )
