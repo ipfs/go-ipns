@@ -55,12 +55,6 @@ There are several other major operations you can do with `go-ipns`. Check out th
 
 https://godoc.org/github.com/ipfs/go-ipns
 
-## Contribute
-
-Feel free to join in. All welcome. Open an [issue](https://github.com/ipfs/go-ipns/issues)!
-
-This repository falls under the IPFS [Code of Conduct](https://github.com/ipfs/community/blob/master/code-of-conduct.md).
-
 ### Want to hack on IPFS?
 
 [![](https://cdn.rawgit.com/jbenet/contribute-ipfs-gif/master/img/contribute.gif)](https://github.com/ipfs/community/blob/master/CONTRIBUTING.md)
